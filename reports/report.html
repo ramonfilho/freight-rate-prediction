@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>Freight rate prediction - validation report</title>
+<style>
+@page { size: A4; margin: 0.6in 0.7in; }
+body { font-family: -apple-system, Helvetica, Arial, sans-serif; font-size: 10.5pt; line-height: 1.45; color: #1f2937; margin: 0; }
+h1 { font-size: 18pt; margin: 0 0 2px 0; } h2 { font-size: 12pt; color: #064A56; margin: 16px 0 6px 0; border-bottom: 1px solid #d1d9e6; padding-bottom: 3px; }
+.sub { color: #6b7280; font-size: 9.5pt; margin-bottom: 10px; }
+table { border-collapse: collapse; width: 100%; font-size: 9.8pt; margin: 6px 0; }
+td, th { padding: 4px 6px; border-bottom: 1px solid #e5e7eb; text-align: left; } th { color: #064A56; }
+img { width: 100%; margin: 6px 0; } .two { display: flex; gap: 12px; } .two img { width: 50%; }
+p { margin: 0 0 7px 0; } code { font-family: Menlo, monospace; font-size: 9.3pt; }
+</style></head><body>
+<h1>Freight rate prediction</h1>
+<div class="sub">Ramon Moreira Filho · Spotter Machine Learning Engineer assessment · September 2026</div>
+
+<h2>1. How the data was split and validated</h2>
+<p>The labeled loads run from 1 January to 31 October 2025 (48,000 rows). The loads to predict run from 1 November to 31 December (12,000 rows). Because the task is to predict the future, the holdout has to sit after the training slice in time. The model was fit on January to August (38,477 loads) and measured on September and October (9,523 loads). A random split would let the model see market conditions from the months it is later asked to forecast, and the score would look better than the one Spotter will measure.</p>
+<p>Everything learned from data is computed on the training slice and reused: the fill value for missing weight, the equipment codes, the rate per mile of the baseline. After the choice of model and features, the chosen model was refit on all 48,000 labeled loads and then applied to the validation loads and to the December lane. The same cleaning and feature code runs on all three files.</p>
+
+<h2>2. Data quality, and what was done</h2>
+<table>
+<tr><th>Found</th><th>Decision</th></tr>
+<tr><td>292 training loads and 145 validation loads with a negative weight</td><td>Sign flipped. Their magnitude (median 31.7k lb) and their rate per mile ($2.16) match the positive loads, so this is a sign error at entry rather than a different kind of load.</td></tr>
+<tr><td>300 training loads and 165 validation loads with no weight</td><td>Filled with the training median. The median is within 150 lb across the three equipment types, so one value is enough.</td></tr>
+<tr><td>374 gaps in <code>market_index</code></td><td>The column left the model (section 4), so no fill was needed.</td></tr>
+<tr><td>8 validation cities that never appear in training (1,447 loads, 12%)</td><td>Location enters as coordinates instead of city names, so a new city is placed by where it is.</td></tr>
+<tr><td>The December lane inputs have no <code>market_index</code>, <code>quote_signal</code> or coordinates</td><td>Coordinates are one fixed pair per city and come from a lookup table. The other two columns are not used by the model.</td></tr>
+</table>
+
+<h2>3. What the exploration showed</h2>
+<p>Distance explains most of the rate (correlation 0.91), and the rate per mile falls with distance: a median of $2.80 per mile under 200 miles against $1.95 above 1,500. Equipment shifts the rate per mile (Reefer $2.31, Flatbed $2.22, Dry Van $2.05). The level moves with the season, from $2.03 per mile in January to $2.25 in June and back to $2.16 in October. Day of week moves it very little ($2.19 to $2.25). <code>quote_signal</code> varies from load to load on the same day and has a correlation of 0.05 with the rate per mile, so it behaves like noise.</p>
+<div class="two"><img src="figures/rate_per_mile_by_distance.png"><img src="figures/rate_per_mile_by_month.png"></div>
+
+<h2>4. Model choice, measured on the holdout</h2>
+<table>
+<tr><th>Model</th><th>MAE</th><th>MAPE</th></tr>
+<tr><td>Baseline: median rate per mile of the training slice times distance</td><td>$257</td><td>11.6%</td></tr>
+<tr><td>Ridge regression on log rate, with distance, log distance and equipment</td><td>$134</td><td>6.0%</td></tr>
+<tr><td>Gradient boosting (scikit-learn HistGradientBoosting), raw target</td><td>$138</td><td>6.4%</td></tr>
+<tr><td><strong>Gradient boosting, log target: chosen</strong></td><td><strong>$122</strong></td><td><strong>5.4%</strong></td></tr>
+<tr><td>Chosen model plus <code>market_index</code> and <code>quote_signal</code></td><td>$126</td><td>5.4%</td></tr>
+<tr><td>Chosen model plus city names as categories</td><td>$132</td><td>5.8%</td></tr>
+<tr><td>Chosen model without coordinates</td><td>$130</td><td>5.9%</td></tr>
+</table>
+<p>The chosen model uses equipment, pickup and delivery coordinates, distance, weight, month and day of week, and predicts the log of the rate. The log target turns a dollar error into a percentage error, so a $25,000 load no longer dominates training, and it cut the MAE from $138 to $122 with the same features. The two columns absent from the December inputs did not improve the holdout, so one model serves both deliverables. MAE is reported because a dispatcher reads it directly (the model misses by $122 per load); MAPE because the rates run from $57 to $25,533 and a percentage treats cheap and expensive loads alike.</p>
+<p>Where the model misses: the error grows with the rate. MAE is $22 under 200 miles and $230 above 1,500 miles, while MAPE stays between 5.4% and 6.0% across bands.</p>
+<div class="two"><img src="figures/holdout_actual_vs_predicted.png"><img src="figures/rate_vs_distance.png"></div>
+
+<h2>5. The fixed December lane</h2>
+<p>Lexington to Fort Wayne, 360 miles, Dry Van, 32,000 lb, one prediction per day. Only the date changes between rows, and the date reaches the model as month and day of week. December is outside the training period, so the model carries the level of the last months it saw, and the line moves only with the weekly pattern, between $839 and $848. The 32 training loads on this lane averaged $857. The chart below is the one produced by the supplied <code>score.py</code>.</p>
+<img src="../scorer_results/candidate_december.png">
+
+<h2>6. A price range around each prediction</h2>
+<p>A dispatcher works with a range, not a point. The range is the point prediction times two factors: the 10th and 90th percentile of actual divided by predicted, measured on the holdout, which the model had not trained on. To check it honestly, the factors were first computed on September alone and applied to October: the range covered 84.7% of the October loads, close to the 80% it aims for. The final factors, from the whole holdout, are 0.974 and 1.061, so the range is about 9% of the rate wide. The files <code>reports/validation_predictions_with_range.csv</code> and <code>reports/december_lane_with_range.csv</code> carry the P10 and P90 next to each prediction.</p>
+<img src="figures/december_with_range.png">
+
+<h2>7. Tests, and what production would look like</h2>
+<p>Six tests in <code>tests/test_prepare.py</code> pin the cleaning and feature code: the negative weight is flipped, the missing weight receives the given fill value, month and day of week come out of the date, a city without coordinates receives them from the lookup, the model input has the feature columns in order, and the price range sits around the point.</p>
+<p>The three files are already the shape of a production job. Training would run on a schedule, the model would be promoted only if the holdout error stayed inside the band seen at launch, and a weekly monitor would compare predicted against realized rate per mile by distance band and equipment, stopping publication when the drift crossed a limit. A new model would take a share of the loads first and the rest only after its realized error matched the old one. This is how the lead-scoring system I run at Bring Data is operated: a quality gate before the registry, daily checks that stop the send, and a canary rollout.</p>
+</body></html>
