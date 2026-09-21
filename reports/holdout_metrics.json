@@ -1,0 +1,77 @@
+{
+  "baseline_median_rate_per_mile": {
+    "MAE": 257.0,
+    "MAPE": 11.63,
+    "RMSE": 684.2
+  },
+  "linear_log_distance": {
+    "MAE": 133.7,
+    "MAPE": 5.99,
+    "RMSE": 639.0
+  },
+  "gbm_raw_target": {
+    "MAE": 137.6,
+    "MAPE": 6.37,
+    "RMSE": 639.8
+  },
+  "gbm_log_target": {
+    "MAE": 121.9,
+    "MAPE": 5.38,
+    "RMSE": 635.9
+  },
+  "gbm_plus_market_index_and_quote_signal": {
+    "MAE": 125.6,
+    "MAPE": 5.4,
+    "RMSE": 639.6
+  },
+  "gbm_plus_city_names": {
+    "MAE": 132.0,
+    "MAPE": 5.8,
+    "RMSE": 640.2
+  },
+  "gbm_without_location": {
+    "MAE": 130.1,
+    "MAPE": 5.87,
+    "RMSE": 637.7
+  },
+  "price_range_p10_p90": {
+    "how": "point prediction times the 10th and 90th percentile of actual/predicted on the holdout",
+    "check_calibrated_on_september_coverage_on_october_pct": 84.7,
+    "p10_factor": 0.9737,
+    "p90_factor": 1.0606,
+    "width_pct_of_rate": 8.7
+  },
+  "chosen_model_by_distance_band": {
+    "(0, 200]": {
+      "MAE": 22.5,
+      "MAPE": 5.64,
+      "RMSE": 88.6
+    },
+    "(400, 800]": {
+      "MAE": 73.6,
+      "MAPE": 5.95,
+      "RMSE": 277.9
+    },
+    "(800, 1500]": {
+      "MAE": 120.1,
+      "MAPE": 4.93,
+      "RMSE": 621.6
+    },
+    "(1500, 3500]": {
+      "MAE": 210.7,
+      "MAPE": 4.95,
+      "RMSE": 958.1
+    },
+    "(200, 400]": {
+      "MAE": 46.5,
+      "MAPE": 6.26,
+      "RMSE": 215.2
+    }
+  },
+  "split": {
+    "train": "2025-01-01 to 2025-08-31",
+    "holdout": "2025-09-01 to 2025-10-31",
+    "train_rows": 38477,
+    "holdout_rows": 9523
+  }
+}
