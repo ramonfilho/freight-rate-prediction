@@ -20,7 +20,7 @@ p { margin: 0 0 7px 0; } code { font-family: Menlo, monospace; font-size: 9.3pt;
 <h2>2. Data quality, and what was done</h2>
 <table>
 <tr><th>Found</th><th>Decision</th></tr>
-<tr><td>292 training loads and 145 validation loads with a negative weight</td><td>Sign flipped. Their magnitude (median 31.7k lb) and their rate per mile ($2.16) match the positive loads, so this is a sign error at entry rather than a different kind of load.</td></tr>
+<tr><td>292 training loads and 145 validation loads with a negative weight</td><td>Sign flipped. Their magnitude (median 31.8k lb) and their rate per mile ($2.16) match the positive loads, so this is a sign error at entry rather than a different kind of load.</td></tr>
 <tr><td>300 training loads and 165 validation loads with no weight</td><td>Filled with the training median. The median is within 150 lb across the three equipment types, so one value is enough.</td></tr>
 <tr><td>374 gaps in <code>market_index</code></td><td>The column left the model (section 4), so no fill was needed.</td></tr>
 <tr><td>8 validation cities that never appear in training (1,447 loads, 12%)</td><td>Location enters as coordinates instead of city names, so a new city is placed by where it is.</td></tr>
@@ -28,7 +28,7 @@ p { margin: 0 0 7px 0; } code { font-family: Menlo, monospace; font-size: 9.3pt;
 </table>
 
 <h2>3. What the exploration showed</h2>
-<p>Distance explains most of the rate (correlation 0.91), and the rate per mile falls with distance: a median of $2.80 per mile under 200 miles against $1.95 above 1,500. Equipment shifts the rate per mile (Reefer $2.31, Flatbed $2.22, Dry Van $2.05). The level moves with the season, from $2.03 per mile in January to $2.25 in June and back to $2.16 in October. Day of week moves it very little ($2.19 to $2.25). <code>quote_signal</code> varies from load to load on the same day and has a correlation of 0.05 with the rate per mile, so it behaves like noise.</p>
+<p>Distance explains most of the rate (correlation 0.91), and the rate per mile falls with distance: a median of $2.80 per mile under 200 miles against $1.95 above 1,500. Equipment shifts the rate per mile (Reefer $2.31, Flatbed $2.22, Dry Van $2.05). The level moves with the season, from $2.03 per mile in January to $2.25 in June and back to $2.16 in October. Day of week moves it very little ($2.13 to $2.17). <code>quote_signal</code> varies from load to load on the same day and has a correlation of 0.05 with the rate per mile, so it behaves like noise.</p>
 <div class="two"><img src="figures/rate_per_mile_by_distance.png"><img src="figures/rate_per_mile_by_month.png"></div>
 
 <h2>4. Model choice, measured on the holdout</h2>
@@ -43,7 +43,7 @@ p { margin: 0 0 7px 0; } code { font-family: Menlo, monospace; font-size: 9.3pt;
 <tr><td>Chosen model without coordinates</td><td>$130</td><td>5.9%</td></tr>
 </table>
 <p>The chosen model uses equipment, pickup and delivery coordinates, distance, weight, month and day of week, and predicts the log of the rate. The log target turns a dollar error into a percentage error, so a $25,000 load no longer dominates training, and it cut the MAE from $138 to $122 with the same features. The two columns absent from the December inputs did not improve the holdout, so one model serves both deliverables. MAE is reported because a dispatcher reads it directly (the model misses by $122 per load); MAPE because the rates run from $57 to $25,533 and a percentage treats cheap and expensive loads alike.</p>
-<p>Where the model misses: the error grows with the rate. MAE is $22 under 200 miles and $230 above 1,500 miles, while MAPE stays between 5.4% and 6.0% across bands.</p>
+<p>Where the model misses: the error grows with the rate. MAE is $22 under 200 miles and $211 above 1,500 miles, while MAPE stays between 4.9% and 6.3% across bands.</p>
 <div class="two"><img src="figures/holdout_actual_vs_predicted.png"><img src="figures/rate_vs_distance.png"></div>
 
 <h2>5. The fixed December lane</h2>

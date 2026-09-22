@@ -64,7 +64,7 @@ actual/predicted measured on the holdout, months the model had not trained
 on. Calibrated on September alone and checked on October, the range covered
 84.7% of the loads, close to the 80% it aims for. The factors are 0.974 and
 1.061, so the range is about 9% of the rate wide. On the December lane the
-point sits between $839 and $848 and the range between $819 and $899.
+point sits between $839 and $848 and the range between $817 and $899.
 
 ## Data quality decisions
 
@@ -94,5 +94,5 @@ before the registry, daily checks that stop the send, and a canary rollout.
 - December does not exist in the training period, so the model carries the
   level of the last months it saw. The fixed-lane chart moves only with the
   day of week, which is what the remaining inputs allow.
-- The largest errors sit on long hauls above 1,500 miles (MAE $230 on that
+- The largest errors sit on long hauls above 1,500 miles (MAE $211 on that
   band against $22 under 200 miles); errors scale with the rate.
