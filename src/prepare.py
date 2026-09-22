@@ -49,7 +49,7 @@ def city_coordinates(*frames: pd.DataFrame) -> pd.DataFrame:
 
 def clean(frame: pd.DataFrame, weight_fill: float) -> pd.DataFrame:
     out = frame.copy()
-    # 292 training loads carry a negative weight. Their magnitude (median 31.7k lb)
+    # 292 training loads carry a negative weight. Their magnitude (median 31.8k lb)
     # and their rate per mile ($2.16) match the positive loads, so this is a sign
     # error at entry, not a different kind of load. Flip the sign instead of
     # dropping the rows.
